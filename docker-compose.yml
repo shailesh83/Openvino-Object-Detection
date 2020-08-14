@@ -1,0 +1,88 @@
+version: '3'
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:1.5.8
+    ports:
+      - "1883:1883"
+      - "9991:9001"
+    container_name: mosquitto
+    hostname: mosquitto
+    networks:
+      - openvino-network
+
+  stream_mux:
+    image: byangintel/stream_mux
+    environment:
+      - INPUT_STREAM=http://192.168.0.45:49990
+    ports:
+      - "49999:49990"
+    container_name: stream_mux
+    hostname: stream_mux
+    networks:
+      - openvino-network
+
+  openvino_object_detect-cpu:
+    image: spandey21/openvino-object-detection:v3.0
+    environment:
+      - INPUT_STREAM=http://stream_mux:49990
+      - TARGET=CPU
+    ports:
+      - "49992:49990"
+    privileged: true
+    container_name: openvino_object_detect-cpu
+    hostname: openvino_object_detect-cpu
+    networks:
+      - openvino-network
+
+  openvino_object_detect-gpu:
+    image: spandey21/openvino-object-detection:v3.0
+    environment:
+      - INPUT_STREAM=http://stream_mux:49990
+      - TARGET=GPU
+    ports:
+      - "49991:49990"
+    volumes:
+      - /dev:/dev
+    privileged: true
+    container_name: openvino_object_detect-gpu
+    hostname: openvino_face_detect-gpu
+    networks:
+      - openvino-network
+
+  openvino_object_detect-myriad:
+    image: spandey21/openvino-object-detection:v3.0
+    environment:
+    #FIXME: myriad will use host net name space
+      - INPUT_STREAM=http://localhost:49990
+      - TARGET=MYRIAD
+    ports:
+      - "49993:49990"
+    volumes:
+      - /dev:/dev
+      - /sys:/sys
+      - /proc/1/ns/net:/run/netns/host
+    privileged: true
+    container_name: openvino_object_detect-myriad
+    hostname: openvino_object_detect-myriad
+    networks:
+      - openvino-network
+
+  demo_webui:
+    image: byangintel/edgex-pi-demo-ui:1.3
+    #image: linjiach/edgex-ui:demo
+    ports:
+      - 8123:8888
+    container_name: demo_webui_app
+    hostname: webui
+    networks:
+      - openvino-network
+    volumes:
+      - ./ui/webapp/cam.html:/webroot/webapp/cam.html
+      - ./cpustat:/webroot/webapp/static/cpustat
+      - ./ui/webapp/static/img/demo.gif:/webroot/webapp/static/img/demo.gif
+
+networks:
+  openvino-network:
+    driver: "bridge"
+...

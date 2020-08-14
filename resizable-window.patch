@@ -1,0 +1,32 @@
+--- main.cpp_orig	2019-09-18 16:36:12.000000000 +0200
++++ main.cpp	2019-10-02 16:35:24.472504660 +0200
+@@ -238,11 +238,14 @@
+         bool isLastFrame = false;
+         bool isAsyncMode = false;  // execution is always started using SYNC mode
+         bool isModeChanged = false;  // set to TRUE when execution mode is changed (SYNC<->ASYNC)
++        bool fullscreenMode = false;
+ 
+         typedef std::chrono::duration<double, std::ratio<1, 1000>> ms;
+         auto total_t0 = std::chrono::high_resolution_clock::now();
+         auto wallclock = std::chrono::high_resolution_clock::now();
+         double ocv_decode_time = 0, ocv_render_time = 0;
++        
++        cv::namedWindow( "Detection results", cv::WINDOW_NORMAL );
+ 
+         std::cout << "To close the application, press 'CTRL+C' here or switch to the output window and press ESC key" << std::endl;
+         std::cout << "To switch between sync/async modes, press TAB key in the output window" << std::endl;
+@@ -378,6 +381,13 @@
+                 isAsyncMode ^= true;
+                 isModeChanged = true;
+             }
++            if ( 'f' == key ) { // "f" Key toggle fullscreen
++                if ( fullscreenMode )
++                    cv::setWindowProperty( "Detection results", cv::WND_PROP_FULLSCREEN, cv::WINDOW_NORMAL );
++                else
++                    cv::setWindowProperty( "Detection results", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN );
++                fullscreenMode ^= true;
++            }
+         }
+         // -----------------------------------------------------------------------------------------------------
+         auto total_t1 = std::chrono::high_resolution_clock::now();
+
